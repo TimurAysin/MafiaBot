@@ -1,7 +1,6 @@
 import vk_api
 import random
-from game import Game, State
-from vk_api.longpoll import VkLongPoll, VkEventType
+from game import Game, State, PlayerType
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 
@@ -26,21 +25,54 @@ class Bot:
 
     def __handleEvents(self, group, event):
         game = self.__groups[group]
-        if (game.state == State.NotActive):
-            self.handleNotActive(self, group, event)
+        if (game.state == State.StartGame):
+            self.__handleStartGame(group, event)
 
-    def __sendMessage(self, event, text):
+    def __sendMessageToChat(self, event, text):
         self.__vk.messages.send(
             random_id=random.randint(1, 1000000000000),
             chat_id=event.message["peer_id"] - 2000000000,
             message=text
         )
 
+    def __sendMessageToPerson(self, d, text):
+        self.__vk.messages.send(
+            random_id=random.randint(1, 1000000000000),
+            domain=d,
+            message=text
+        )
+
     def __addGroup(self, group, event):
         game = Game()
         self.__groups[group] = game
-        self.__sendMessage(event, game.greet())
+        self.__sendMessageToChat(event, game.greet())
 
-    def __handleNotActive(self, group, event):
-        if (event.type == VkBotEventType.MESSAGE_NEW and event.message["text"].lower == "/start"):
-            
+    def __handleStartGame(self, group, event):
+        if (event.type == VkBotEventType.MESSAGE_NEW and event.message["text"] == "/start"):
+            self.__groups[group].state = State.InGame
+            self.__sendMessageToChat(event, self.__groups[group].start())
+
+            profiles = self.__vk.messages.getConversationMembers(
+                peer_id=event.message["peer_id"]
+            )["profiles"]
+
+            participants = []
+
+            for info in profiles:
+                participants.append({
+                    "screen_name": info["screen_name"],
+                    "name": info["first_name"] + " " + info["last_name"]
+                })
+
+            self.__groups[group].participants = participants
+
+            self.__sendMessageToChat(event, self.__groups[group].printParticipants())
+            self.__sendMessageToChat(event, "Распределяю роли...")
+            self.__groups[group].makeRoles()
+            self.sendInvitationToPlayers(self.__groups[group].players)
+        elif (event.message["text"] != "/start"):
+            self.__sendMessageToChat(event, "Я не знаю этой команды.")
+
+    def sendInvitationToPlayers(self, players):
+        for player in players:
+            self.__sendMessageToPerson(player.screen_name, "Поздравляем, вы - невиновный.")
