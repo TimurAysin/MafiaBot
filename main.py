@@ -1,11 +1,11 @@
 import sys
 sys.path.append("./scripts")
 
-from server import Server
+from bot import Bot, Game
 
 def main():
-    s = Server()
-    s.startPolling()
+    bot = Bot()
+    bot.startPolling()
 
 if __name__ == "__main__":
     main()
