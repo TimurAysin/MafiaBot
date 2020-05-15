@@ -14,43 +14,49 @@ class Bot:
         self.__vk = self.__vk_session.get_api()
         self.__groups = dict()
 
-    def startPolling(self):
+    def start_polling(self):
         for event in self.__longpoll.listen():
-            group = event.message["peer_id"] - 2000000000
-            if (group in self.__groups.keys()):
-                self.__handleEvents(group, event)
-            else:
-                print("New group id:", group)
-                self.__addGroup(group, event)
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                group = event.message["peer_id"] - 2000000000
+                if group not in self.__groups.keys():
+                    print("New group id:", group)
+                    self.__add_group(group, event)
+                else:
+                    self.__handle_events(group, event)
 
-    def __handleEvents(self, group, event):
+    def __handle_events(self, group, event):
         game = self.__groups[group]
-        if (game.state == State.StartGame):
-            self.__handleStartGame(group, event)
+        if game.state == State.StartGame:
+            self.__handle_start_game(group, event)
 
-    def __sendMessageToChat(self, event, text):
+    def __send_message_to_chat(self, event, text):
         self.__vk.messages.send(
             random_id=random.randint(1, 1000000000000),
             chat_id=event.message["peer_id"] - 2000000000,
             message=text
         )
 
-    def __sendMessageToPerson(self, d, text):
+    def __send_message_to_person(self, d, text):
         self.__vk.messages.send(
             random_id=random.randint(1, 1000000000000),
             domain=d,
             message=text
         )
 
-    def __addGroup(self, group, event):
+    def __add_group(self, group, event):
         game = Game()
         self.__groups[group] = game
-        self.__sendMessageToChat(event, game.greet())
-
-    def __handleStartGame(self, group, event):
-        if (event.type == VkBotEventType.MESSAGE_NEW and event.message["text"] == "/start"):
+        # Добавление бота в беседу
+        if event.type == VkBotEventType.MESSAGE_NEW and event.message["text"] == "":
+            self.__send_message_to_chat(event, game.greet())
+        # Бот уже в беседе
+        elif event.type == VkBotEventType.MESSAGE_NEW:
+            self.__handle_start_game(group, event)
+            
+    def __handle_start_game(self, group, event):
+        if event.type == VkBotEventType.MESSAGE_NEW and event.message["text"] == "/start":
             self.__groups[group].state = State.InGame
-            self.__sendMessageToChat(event, self.__groups[group].start())
+            self.__send_message_to_chat(event, self.__groups[group].start())
 
             profiles = self.__vk.messages.getConversationMembers(
                 peer_id=event.message["peer_id"]
@@ -66,13 +72,13 @@ class Bot:
 
             self.__groups[group].participants = participants
 
-            self.__sendMessageToChat(event, self.__groups[group].printParticipants())
-            self.__sendMessageToChat(event, "Распределяю роли...")
-            self.__groups[group].makeRoles()
-            self.sendInvitationToPlayers(self.__groups[group].players)
-        elif (event.message["text"] != "/start"):
-            self.__sendMessageToChat(event, "Я не знаю этой команды.")
+            self.__send_message_to_chat(event, self.__groups[group].print_participants())
+            self.__send_message_to_chat(event, "Распределяю роли...")
+            self.__groups[group].make_roles()
+            self.send_invitation_to_players(self.__groups[group].players)
+        elif event.message["text"] != "/start":
+            self.__send_message_to_chat(event, "Я не знаю этой команды.")
 
-    def sendInvitationToPlayers(self, players):
+    def send_invitation_to_players(self, players):
         for player in players:
-            self.__sendMessageToPerson(player.screen_name, "Поздравляем, вы - невиновный.")
+            self.__send_message_to_person(player.screen_name, "Поздравляем, вы - невиновный.")

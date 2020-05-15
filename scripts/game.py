@@ -1,6 +1,6 @@
-from state import State
 from player import Player
 from playerType import PlayerType
+from state import State
 
 
 class Game:
@@ -57,7 +57,7 @@ class Game:
     def players(self):
         return self.__players
 
-    def printParticipants(self):
+    def print_participants(self):
         n = len(self.__participants)
         s = "Количество участников: " + str(n) + "\n"
         i = 1
@@ -67,8 +67,8 @@ class Game:
         return s
 
     # Finish later
-    def makeRoles(self):
-        if (len(self.__participants) == 0):
+    def make_roles(self):
+        if len(self.__participants) == 0:
             print("Wrong participants pack")
             raise
         n = len(self.__participants)
@@ -77,5 +77,5 @@ class Game:
             self.__players.append(Player(PlayerType.Civilian, participant["name"], participant["screen_name"]))
 
     # For testing
-    def makeMafia(self, ind):
+    def make_mafia(self, ind):
         pass

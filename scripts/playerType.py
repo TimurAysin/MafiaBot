@@ -5,4 +5,4 @@ class PlayerType(Enum):
     Civilian = 1
     Mafia = 2
     Doctor = 3
-    Сommissioner = 4
+    Commissioner = 4
