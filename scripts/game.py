@@ -1,3 +1,4 @@
+import random
 from player import Player
 from playerType import PlayerType
 from state import State
@@ -12,6 +13,14 @@ class Game:
         self.__start = "Начинаем!"
         self.__participants = []
         self.__players = []
+        self.__mafia = []
+        self.__commissioner = -1
+        self.__doctor = -1
+        self.votes = dict()
+        self.ids = []
+
+        # Зависит от количества игроков, потом сделаю
+        self.__number_of_mafias = 0
 
     @property
     def state(self):
@@ -73,9 +82,26 @@ class Game:
             raise
         n = len(self.__participants)
         self.__players = []
+
         for participant in self.__participants:
             self.__players.append(Player(PlayerType.Civilian, participant["name"], participant["screen_name"]))
 
-    # For testing
-    def make_mafia(self, ind):
-        pass
+        i = 0
+        while i < self.__number_of_mafias:
+            ind = random.randint(0, len(self.__participants) - 1)
+            if self.__players[ind].role == PlayerType.Civilian:
+                self.__players[ind].role = PlayerType.Mafia
+                self.__mafia.append(ind)
+                i += 1
+
+        while self.__commissioner == -1:
+            ind = random.randint(0, len(self.__participants) - 1)
+            if self.__players[ind].role == PlayerType.Civilian:
+                self.__players[ind].role = PlayerType.Commissioner
+                self.__commissioner = ind
+
+        while self.__doctor == -1:
+            ind = random.randint(0, len(self.__participants) - 1)
+            if self.__players[ind].role == PlayerType.Civilian:
+                self.__players[ind].role = PlayerType.Doctor
+                self.__doctor = ind
