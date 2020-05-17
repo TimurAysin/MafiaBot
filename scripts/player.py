@@ -6,3 +6,4 @@ class Player:
         self.role = role
         self.name = name
         self.screen_name = screen_name
+        self.active = True
