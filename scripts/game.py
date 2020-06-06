@@ -1,16 +1,12 @@
 import random
-from player import Player
-from playerType import PlayerType
+from players.player import Player
+from players.playerType import PlayerType
 from state import State
 
 
 class Game:
     def __init__(self):
-        self.state = State.StartGame
-        self.__greet = "Здравствуйте! Рад, что вы собрались сегодня, чтобы поиграть в мафию. \
-                               Я буду вашим ведущим. Для того, чтобы начать, сделайте меня администратором и напишите команду: /start. \
-                               Желаю приятной игры!"
-        self.__start = "Начинаем!"
+        self.__state = State.StartGame
         self.__participants = []
         self.__players = []
         self.mafia = []
@@ -29,7 +25,8 @@ class Game:
 
     @property
     def chat_id(self):
-        return self.__chat_id
+        return self.__chat_idpment
+
 
     @chat_id.setter
     def chat_id(self, val):

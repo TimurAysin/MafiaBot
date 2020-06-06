@@ -1,19 +1,20 @@
-from typing import Type
-
+from metaSingleton import MetaSingleton
 import vk_api
 import random
 from game import Game, State, PlayerType
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 
-class Bot:
+class Bot(metaclass=MetaSingleton):
     def __init__(self):
+        # VK_API
         self.__token = "55d54859bfc02268950c448c91fe6c95e1261b94e960bea620907555863ed31ed7bc9ca462dd619e1bfed"
         self.__group_id = "195261716"
-
         self.__vk_session = vk_api.VkApi(token=self.__token)
         self.__longpoll = VkBotLongPoll(self.__vk_session, self.__group_id)
         self.__vk = self.__vk_session.get_api()
+
+        # Группы, в которых бот запущен
         self.__groups = dict()
 
     def start_polling(self):
@@ -93,7 +94,7 @@ class Bot:
         self.__groups[group].chat_id = event.message["peer_id"]
         # Добавление бота в беседу
         if event.type == VkBotEventType.MESSAGE_NEW and event.message["text"] == "":
-            self.__send_message_to_chat(event.message["peer_id"].message["peer_id"], game.greet())
+            self.__send_message_to_chat(event.message["peer_id"], game.greet())
         # Бот уже в беседе
         elif event.type == VkBotEventType.MESSAGE_NEW:
             self.__handle_start_game(group, event)

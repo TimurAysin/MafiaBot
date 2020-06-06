@@ -2,5 +2,6 @@ from enum import Enum
 
 
 class MessageType(Enum):
-    Info = 0
+    Bot_Cond = 0
     Greeting = 1
+    Start = 2
