@@ -1,12 +1,6 @@
 import random
 from players.playerType import PlayerType
 from players.player import Player
-from players.mafia import Mafia
-from players.civilian import Civilian
-from players.don import Don
-from players.commissioner import Commissioner
-from players.doctor import Doctor
-from players.maniac import Maniac
 
 
 class PlayerPack:
