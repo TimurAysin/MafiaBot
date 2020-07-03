@@ -5,154 +5,12 @@ from players import *
 from state import State
 
 
-# class Game:
-#     def __init__(self):
-#         self.__state = State.StartGame
-#         self.__participants = []
-#         self.__players = []
-#         self.mafia = []
-#         self.__commissioner = -1
-#         self.__doctor = -1
-#         self.votes = dict()
-#         self.ids = []
-#         self.last_breath = -1
-#         self.mafia_vote = dict()
-#         self.to_kill = []
-#         self.was_mafia_found = False
-#         self.__chat_id = -1
-#         self.heal = -1
-#         # Зависит от количества игроков, потом сделаю
-#         self.__number_of_mafias = 1
-#
-#     @property
-#     def chat_id(self):
-#         return self.__chat_idpment
-#
-#
-#     @chat_id.setter
-#     def chat_id(self, val):
-#         if self.__chat_id == -1:
-#             self.__chat_id = val
-#
-#     @property
-#     def state(self):
-#         return self.__state
-#
-#     @state.setter
-#     def state(self, value):
-#         try:
-#             if not isinstance(value, State):
-#                 raise ValueError
-#
-#             self.__state = value
-#         except ValueError:
-#             print("Wrong state assigned to game object -", value)
-#             raise
-#
-#     def greet(self):
-#         return self.__greet
-#
-#     def start(self):
-#         return self.__start
-#
-#     @property
-#     def participants(self):
-#         return self.__participants
-#
-#     @participants.setter
-#     def participants(self, value):
-#         try:
-#             if not (isinstance(value, list)):
-#                 raise ValueError
-#
-#             for elem in value:
-#                 if not (isinstance(elem, dict) and 'screen_name' in elem and 'name' in elem):
-#                     raise ValueError
-#
-#             self.__participants = value
-#         except ValueError:
-#             print("Wrong participants object -", value)
-#             raise
-#
-#     @property
-#     def players(self):
-#         return self.__players
-#
-#     def print_participants(self):
-#         n = len(self.__participants)
-#         s = "Количество участников: " + str(n) + "\n"
-#         i = 1
-#         for elem in self.__participants:
-#             s += str(i) + ": @" + elem["screen_name"] + " " + elem["name"] + "\n"
-#             i += 1
-#         return s
-#
-#     def print_players(self):
-#         n = len(self.__participants)
-#         s = "Количество участников: " + str(n) + "\n"
-#         i = 1
-#         for elem in self.__players:
-#             if elem.active:
-#                 s += str(i) + ": @" + elem.screen_name + " " + elem.name + "\n"
-#             i += 1
-#         return s
-#
-#     # Finish later
-#     def make_roles(self):
-#         if len(self.__participants) == 0:
-#             print("Wrong participants pack")
-#             raise
-#         n = len(self.__participants)
-#         self.__players = []
-#
-#         for participant in self.__participants:
-#             self.__players.append(Player(PlayerType.Civilian, participant["name"], participant["screen_name"]))
-#
-#         i = 0
-#         while i < self.__number_of_mafias:
-#             ind = random.randint(0, len(self.__participants) - 1)
-#             if self.__players[ind].role == PlayerType.Civilian:
-#                 self.__players[ind].role = PlayerType.Mafia
-#                 self.mafia.append(ind)
-#                 i += 1
-#
-#         while self.__commissioner == -1:
-#             ind = random.randint(0, len(self.__participants) - 1)
-#             if self.__players[ind].role == PlayerType.Civilian:
-#                 self.__players[ind].role = PlayerType.Commissioner
-#                 self.__commissioner = ind
-#
-#         while self.__doctor == -1:
-#             ind = random.randint(0, len(self.__participants) - 1)
-#             if self.__players[ind].role == PlayerType.Civilian:
-#                 self.__players[ind].role = PlayerType.Doctor
-#                 self.__doctor = ind
-#
-#     def delete_player(self, ind):
-#         self.__players[ind].active = False
-#         if self.__players[ind].role == PlayerType.Mafia:
-#             self.mafia.remove(ind)
-#         self.last_breath = self.__players[ind].screen_name
-#
-#     def print_mafia(self):
-#         s = "Оставшиеся мафии:\n"
-#         for player in self.__players:
-#             if player.role == PlayerType.Mafia and player.active:
-#                 s += "@" + player.screen_name + "\n"
-#         return s
-#
-#     def reset(self):
-#         self.votes = dict()
-#         self.last_breath = -1
-#         self.mafia_vote = dict()
-#         self.to_kill = []
-#         self.was_mafia_found = False
-#         self.heal = -1
 class Game:
     __host = None
+    __player_pack = None
+    state = None
 
     def __init__(self, host):
-        self.__player_pack = None
         self.host = host
 
     @property
@@ -168,3 +26,49 @@ class Game:
         if not ("name" in obj.keys() and "screen_name" in obj.keys() and "player_id" in obj.keys()):
             return
         self.__host = obj
+
+    @property
+    def player_pack(self):
+        return self.__player_pack
+
+    @player_pack.setter
+    def player_pack(self, new_pack):
+        if self.__player_pack is not None:
+            print("Player Pack is already set.")
+            return
+
+        if not isinstance(new_pack, PlayerPack):
+            print(new_pack, "can't be a Player Pack.")
+            return
+
+        if new_pack.role_count is None or new_pack.players is None:
+            print("Can's assign Player Pack.")
+            return
+
+        self.__player_pack = new_pack
+
+    def start_game(self):
+        self.__player_pack.make_roles()
+        self.state = State.Greet
+
+    def alive_players(self):
+        alive_players = []
+
+        for player in self.__player_pack.players:
+            if player.active:
+                alive_players.append(player)
+
+        return alive_players
+
+    def players_by_type(self, type):
+        if not (issubclass(type, Player)):
+            print("Wrong player type -", type)
+            return None
+
+        result = []
+
+        for player in self.__player_pack.players:
+            if isinstance(player, type):
+                result.append(player)
+
+        return result

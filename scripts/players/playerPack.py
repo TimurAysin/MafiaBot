@@ -27,20 +27,37 @@ class PlayerPack:
                 return
         self.__players = participants
 
-    def make_roles(self, role_count):
-        if self.__role_dist:
+    @property
+    def role_count(self):
+        return self.__role_count
+
+    @role_count.setter
+    def role_count(self, new_rc):
+        if self.__players is None:
             return
 
-        if self.__wrong_role_count(role_count):
+        if self.__role_count is not None or PlayerPack.wrong_role_count(new_rc):
+            return
+
+        num = 0
+        for player_type, count in new_rc.items():
+            num += count
+
+        if num != len(self.__players):
+            print("Number of players doesn't match.")
+            return
+
+        self.__role_count = new_rc
+
+    def make_roles(self):
+        if self.__role_dist:
             return
 
         if len(self.__players) == 0:
             print("PlayerPack has no players in it.")
             return
 
-        self.__role_count = role_count
-
-        for player_type, count in role_count.items():
+        for player_type, count in self.__role_count.items():
             self.__make_type(player_type, count)
 
         self.__role_dist = True
@@ -55,8 +72,10 @@ class PlayerPack:
                                                   self.__players[ind]["player_id"])
                 i += 1
 
-    def __wrong_role_count(self, role_count):
+    @staticmethod
+    def wrong_role_count(role_count):
         for player_type, count in role_count.items():
             if not (issubclass(player_type, Player) and isinstance(count, int)):
                 return True
+
         return False
