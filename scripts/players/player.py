@@ -10,11 +10,12 @@ class Player(ABC):
     heal - возможность лечить
     ask - возможность спрашивать у ведущего, объект задается параметрически
     """
-    def __init__(self, role, name, screen_name, id, kill, heal, ask):
+
+    def __init__(self, role, name, screen_name, player_id, kill, heal, ask):
         self.role = role
         self.name = name
         self.screen_name = screen_name
-        self.id = id
+        self.player_id = player_id
         self.active = True
         self.kill = kill
         self.heal = heal

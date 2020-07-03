@@ -1,5 +1,4 @@
 import random
-from playerType import PlayerType
 from player import Player
 
 
@@ -22,7 +21,7 @@ class PlayerPack:
     def players(self, participants):
         for elem in participants:
             if not (isinstance(elem, dict) and "name" in elem.keys()
-                    and "screen_name" in elem.keys() and "id" in elem.keys()):
+                    and "screen_name" in elem.keys() and "player_id" in elem.keys()):
                 print("Wrong participants pack: ", end='')
                 print(participants)
                 return
@@ -33,6 +32,10 @@ class PlayerPack:
             return
 
         if self.__wrong_role_count(role_count):
+            return
+
+        if len(self.__players) == 0:
+            print("PlayerPack has no players in it.")
             return
 
         self.__role_count = role_count
@@ -49,7 +52,7 @@ class PlayerPack:
             if not isinstance(self.__players[ind], Player):
                 self.__players[ind] = player_type(self.__players[ind]["name"],
                                                   self.__players[ind]["screen_name"],
-                                                  self.__players[ind]["id"])
+                                                  self.__players[ind]["player_id"])
                 i += 1
 
     def __wrong_role_count(self, role_count):
