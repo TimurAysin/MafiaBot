@@ -6,26 +6,8 @@ from state import State
 
 
 class Game:
-    __host = None
     __player_pack = None
     state = None
-
-    def __init__(self, host):
-        self.host = host
-
-    @property
-    def host(self):
-        return self.__host
-
-    @host.setter
-    def host(self, obj):
-        if not isinstance(obj, dict):
-            print("Wrong host:", obj)
-            return
-
-        if not ("name" in obj.keys() and "screen_name" in obj.keys() and "player_id" in obj.keys()):
-            return
-        self.__host = obj
 
     @property
     def player_pack(self):

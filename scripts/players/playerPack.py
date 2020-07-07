@@ -79,3 +79,26 @@ class PlayerPack:
                 return True
 
         return False
+
+    def heal_player(self, ind):
+        if ind < 0 or ind >= len(self.__players):
+            print("Wrong index for heal:", ind)
+            return
+        self.__players[ind].active = True
+
+    def kill_player(self, ind):
+        if ind < 0 or ind >= len(self.__players):
+            print("Wrong index for kill:", ind)
+            return
+        self.__players[ind].active = False
+
+    def compare_player_type(self, ind, player_type):
+        if ind < 0 or ind >= len(self.__players):
+            print("Wrong index for comparison:", ind)
+            return
+
+        if not issubclass(player_type, Player):
+            print("Wrong type for comparison:", player_type)
+            return
+
+        return isinstance(self.__players[ind], player_type)
