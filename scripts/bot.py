@@ -1,9 +1,10 @@
 from metaSingleton import MetaSingleton
 import vk_api
 import random
-from game import Game, State, PlayerType
+from game import Game, State, PlayerType, PlayerPack
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from message import *
+from math import ceil
 
 
 class Bot(metaclass=MetaSingleton):
@@ -32,11 +33,20 @@ class Bot(metaclass=MetaSingleton):
         self.__send_message_to_peer(peer_id, PROPOSITION_TO_CREATE_GAME)
 
     def __handle_group_msg(self, event, peer_id):
-        if peer_id not in self.__groups:
+        if event.type != VkBotEventType.MESSAGE_NEW:
+            return
+
+        text = event.message["text"].split(' ')[-1].strip()
+
+        if peer_id not in self.__groups and text != "Старт":
             self.__send_message_to_chat(peer_id, CREATE_NEW_GAME, "keyboards/intro.json")
+            return
+        elif text == "Старт":
+            self.__start_game(event, peer_id)
             return
 
     def __send_message_to_chat(self, peer_id, text, keyboard=None):
+        print("Sending " + text)
         self.__vk.messages.send(
             random_id=random.randint(1, 1000000000000),
             chat_id=peer_id,
@@ -60,3 +70,39 @@ class Bot(metaclass=MetaSingleton):
             from_us = True
             peer_id += 2000000000
         return [peer_id, from_us]
+
+    def __do_head_count(self, event, peer_id):
+        info = self.__vk.messages.getConversationMembers(
+            peer_id=event.message["peer_id"]
+        )
+
+        participants = []
+        for participant in info["profiles"]:
+            participants.append({
+                "screen_name": participant["screen_name"],
+                "name": participant["first_name"] + " " + participant["last_name"]
+            })
+
+        new_player_pack = PlayerPack(participants)
+        return new_player_pack
+
+    def __start_game(self, event, peer_id):
+        self.__groups[peer_id] = Game
+
+        self.__send_message_to_chat(peer_id, START)
+        self.__send_message_to_chat(peer_id, HEAD_COUNT)
+
+        new_player_pack = self.__do_head_count(event, peer_id)
+
+        self.__send_message_to_chat(peer_id, new_player_pack.pretty_print())
+
+        self.__make_roles(event, peer_id, new_player_pack)
+
+    def __make_roles(self, event, peer_id, new_player_pack):
+        self.__send_message_to_chat(peer_id, ROLES_PROMPT)
+
+        number_of_players = len(new_player_pack.players)
+        default_mafia_count = ceil(number_of_players / 4.0)
+
+        self.__send_message_to_chat(peer_id, suggest_default(default_mafia_count))
+        self.__send_message_to_chat(peer_id, CUSTOM_PACK, keyboard="keyboards/role_type.json")

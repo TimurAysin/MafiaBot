@@ -42,15 +42,15 @@ class Game:
 
         return alive_players
 
-    def players_by_type(self, type):
-        if not (issubclass(type, Player)):
-            print("Wrong player type -", type)
+    def players_by_type(self, player_type):
+        if not (issubclass(player_type, Player)):
+            print("Wrong player type -", player_type)
             return None
 
         result = []
 
         for player in self.__player_pack.players:
-            if isinstance(player, type):
+            if isinstance(player, player_type):
                 result.append(player)
 
         return result

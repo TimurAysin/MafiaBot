@@ -101,3 +101,12 @@ class PlayerPack:
             return
 
         return isinstance(self.__players[ind], player_type)
+
+    def pretty_print(self):
+        resp = "Количество участников: " + str(len(self.__players)) + "\n"
+
+        i = 1
+        for player in self.__players:
+            resp += "{}. @{} {}\n".format(str(i), player["screen_name"], player["name"])
+            i += 1
+        return resp
