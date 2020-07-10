@@ -12,3 +12,4 @@ class State(Enum):
     EndGame = auto()
     Wake = auto()
     Init = auto()
+    Config = auto()

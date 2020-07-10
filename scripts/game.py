@@ -23,15 +23,18 @@ class Game:
             print(new_pack, "can't be a Player Pack.")
             return
 
-        if new_pack.role_count is None or new_pack.players is None:
+        if new_pack.players is None:
             print("Can's assign Player Pack.")
             return
 
         self.__player_pack = new_pack
 
+    def add_role_count(self, role_count):
+        self.__player_pack.role_count = role_count
+
     def start_game(self):
         self.__player_pack.make_roles()
-        self.state = State.Greet
+        self.state = State.Vote
 
     def alive_players(self):
         alive_players = []
@@ -54,3 +57,12 @@ class Game:
                 result.append(player)
 
         return result
+
+    def heal(self, ind):
+        self.__player_pack.heal_player(ind)
+
+    def kill(self, ind):
+        self.__player_pack.kill_player(ind)
+
+    def ask_about_type(self, ind, player_type):
+        return self.__player_pack.compare_player_type(ind, player_type)

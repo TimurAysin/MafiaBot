@@ -53,6 +53,10 @@ class PlayerPack:
         if self.__role_dist:
             return
 
+        if self.__role_count is None:
+            print("Empty role count.")
+            return
+
         if len(self.__players) == 0:
             print("PlayerPack has no players in it.")
             return

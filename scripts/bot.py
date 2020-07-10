@@ -5,6 +5,7 @@ from game import Game, State, PlayerType, PlayerPack
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from message import *
 from math import ceil
+from players import *
 
 
 class Bot(metaclass=MetaSingleton):
@@ -33,20 +34,19 @@ class Bot(metaclass=MetaSingleton):
         self.__send_message_to_peer(peer_id, PROPOSITION_TO_CREATE_GAME)
 
     def __handle_group_msg(self, event, peer_id):
-        if event.type != VkBotEventType.MESSAGE_NEW:
-            return
-
         text = event.message["text"].split(' ')[-1].strip()
 
         if peer_id not in self.__groups and text != "Старт":
             self.__send_message_to_chat(peer_id, CREATE_NEW_GAME, "keyboards/intro.json")
-            return
-        elif text == "Старт":
+        elif peer_id not in self.__groups and text == "Старт":
             self.__start_game(event, peer_id)
-            return
+        elif self.__groups[peer_id].state == State.Init:
+            if text == "Стандартный":
+                self.__create_standard_roles(peer_id)
+            elif text == "Настроить":
+                self.__configure_roles(peer_id)
 
     def __send_message_to_chat(self, peer_id, text, keyboard=None):
-        print("Sending " + text)
         self.__vk.messages.send(
             random_id=random.randint(1, 1000000000000),
             chat_id=peer_id,
@@ -87,22 +87,46 @@ class Bot(metaclass=MetaSingleton):
         return new_player_pack
 
     def __start_game(self, event, peer_id):
-        self.__groups[peer_id] = Game
+        self.__groups[peer_id] = Game()
 
         self.__send_message_to_chat(peer_id, START)
         self.__send_message_to_chat(peer_id, HEAD_COUNT)
 
         new_player_pack = self.__do_head_count(event, peer_id)
+        self.__groups[peer_id].player_pack = new_player_pack
 
         self.__send_message_to_chat(peer_id, new_player_pack.pretty_print())
 
-        self.__make_roles(event, peer_id, new_player_pack)
+        self.__prompt_roles(peer_id, new_player_pack)
 
-    def __make_roles(self, event, peer_id, new_player_pack):
+    def __prompt_roles(self, peer_id, new_player_pack):
         self.__send_message_to_chat(peer_id, ROLES_PROMPT)
 
         number_of_players = len(new_player_pack.players)
+
+        # According to Wikipedia rules
         default_mafia_count = ceil(number_of_players / 4.0)
 
         self.__send_message_to_chat(peer_id, suggest_default(default_mafia_count))
         self.__send_message_to_chat(peer_id, CUSTOM_PACK, keyboard="keyboards/role_type.json")
+
+        self.__groups[peer_id].state = State.Init
+
+    def __create_standard_roles(self, peer_id):
+        number_of_players = len(self.__groups[peer_id].player_pack.players)
+        default_mafia_count = ceil(number_of_players / 4.0)
+
+        role_count = {
+            Mafia: default_mafia_count,
+            Doctor: 1,
+            Commissioner: 1,
+            Civilian: number_of_players - default_mafia_count - 2
+        }
+
+        self.__groups[peer_id].add_role_count(role_count)
+        self.__groups[peer_id].start_game()
+        self.__groups[peer_id].state = State.Vote
+
+    def __configure_roles(self, peer_id):
+        self.__send_message_to_chat(peer_id, CONFIG_EXPLAIN, keyboard="keyboards/role_config.json")
+        self.__groups[peer_id].state = State.Config

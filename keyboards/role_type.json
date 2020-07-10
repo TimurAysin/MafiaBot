@@ -1,11 +1,11 @@
 {
-  "one_time": true,
+  "one_time": false,
   "buttons": [
     [
       {
         "action": {
           "type": "text",
-          "label": "Стандартный набор"
+          "label": "Стандартный"
         },
         "color": "positive"
       },
