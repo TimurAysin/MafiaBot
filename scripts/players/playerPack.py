@@ -21,7 +21,7 @@ class PlayerPack:
     def players(self, participants):
         for elem in participants:
             if not (isinstance(elem, dict) and "name" in elem.keys()
-                    and "screen_name" in elem.keys() and "player_id" in elem.keys()):
+                    and "screen_name" in elem.keys()):
                 print("Wrong participants pack: ", end='')
                 print(participants)
                 return
@@ -68,8 +68,7 @@ class PlayerPack:
             ind = random.randint(0, self.count_players() - 1)
             if not isinstance(self.__players[ind], Player):
                 self.__players[ind] = player_type(self.__players[ind]["name"],
-                                                  self.__players[ind]["screen_name"],
-                                                  self.__players[ind]["player_id"])
+                                                  self.__players[ind]["screen_name"])
                 i += 1
 
     @staticmethod
