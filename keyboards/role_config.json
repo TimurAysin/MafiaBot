@@ -1,44 +1,60 @@
 {
   "one_time": false,
   "buttons": [
-    [{
-      "action": {
-        "type": "text",
-        "label": "Маньяк"
+    [
+      {
+        "action": {
+          "type": "text",
+          "label": "Маньяк"
+        },
+        "color": "primary"
       },
-      "color": "primary"
-    }, {
-      "action": {
-        "type": "text",
-        "label": "Мирный"
+      {
+        "action": {
+          "type": "text",
+          "label": "Мирный"
+        },
+        "color": "primary"
+      }
+    ],
+    [
+      {
+        "action": {
+          "type": "text",
+          "label": "Коммиссар"
+        },
+        "color": "primary"
       },
-      "color": "primary"
-    }],
-    [{
-      "action": {
-        "type": "text",
-        "label": "Коммиссар"
+      {
+        "action": {
+          "type": "text",
+          "label": "Доктор"
+        },
+        "color": "primary"
+      }
+    ],
+    [
+      {
+        "action": {
+          "type": "text",
+          "label": "Дон"
+        },
+        "color": "primary"
       },
-      "color": "primary"
-    }, {
-      "action": {
-        "type": "text",
-        "label": "Доктор"
+      {
+        "action": {
+          "type": "text",
+          "label": "Мафия"
+        },
+        "color": "primary"
       },
-      "color": "primary"
-    }],
-    [{
-      "action": {
-        "type": "text",
-        "label": "Дон"
-      },
-      "color": "primary"
-    }, {
-      "action": {
-        "type": "text",
-        "label": "Мафия"
-      },
-      "color": "primary"
-    }]
+      {
+        "action": {
+          "type": "text",
+          "label": "Готово"
+        },
+        "color": "positive"
+      }
     ]
+  ]
 }

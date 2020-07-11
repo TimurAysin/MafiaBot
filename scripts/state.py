@@ -13,3 +13,4 @@ class State(Enum):
     Wake = auto()
     Init = auto()
     Config = auto()
+    SetRole = auto()

@@ -19,6 +19,8 @@ class Bot(metaclass=MetaSingleton):
 
         # Группы, в которых бот запущен
         self.__groups = dict()
+        # Для настройки ролей
+        self.__role = dict()
 
     def start_polling(self):
         for event in self.__longpoll.listen():
@@ -45,6 +47,10 @@ class Bot(metaclass=MetaSingleton):
                 self.__create_standard_roles(peer_id)
             elif text == "Настроить":
                 self.__configure_roles(peer_id)
+        elif self.__groups[peer_id].state == State.Config:
+            self.__config_role(peer_id, text)
+        elif self.__groups[peer_id].state == State.SetRole:
+            self.__set_role(peer_id, text)
 
     def __send_message_to_chat(self, peer_id, text, keyboard=None):
         self.__vk.messages.send(
@@ -130,3 +136,47 @@ class Bot(metaclass=MetaSingleton):
     def __configure_roles(self, peer_id):
         self.__send_message_to_chat(peer_id, CONFIG_EXPLAIN, keyboard="keyboards/role_config.json")
         self.__groups[peer_id].state = State.Config
+        self.__groups[peer_id].player_pack.role_count = {}
+
+    def __config_role(self, peer_id, text):
+        if text == "Маньяк":
+            self.__role[peer_id] = Maniac
+        elif text == "Мирный":
+            self.__role[peer_id] = Civilian
+        elif text == "Коммиссар":
+            self.__role[peer_id] = Commissioner
+        elif text == "Доктор":
+            self.__role[peer_id] = Doctor
+        elif text == "Дон":
+            self.__role[peer_id] = Don
+        elif text == "Мафия":
+            self.__role[peer_id] = Mafia
+        elif text == "Готово":
+            self.__check_roles(peer_id)
+
+        if peer_id in self.__role.keys():
+            self.__groups[peer_id].state = State.SetRole
+            self.__send_message_to_chat(peer_id, ROLE_VALUE, keyboard="keyboards/cancel.json")
+
+    def __set_role(self, peer_id, text):
+        if not text.isnumeric() and text != "Отмена":
+            self.__send_message_to_chat(peer_id, ROLE_VALUE_ERROR)
+        elif text == "Отмена":
+            del self.__role[peer_id]
+            self.__groups[peer_id].state = State.Config
+            self.__send_message_to_chat(peer_id, "Ок", keyboard="keyboards/role_config.json")
+        else:
+            self.__groups[peer_id].player_pack.role_count[self.__role[peer_id]] = int(text)
+            del self.__role[peer_id]
+            self.__groups[peer_id].state = State.Config
+            self.__send_message_to_chat(peer_id, ROLE_VALUE_SUCCESS, keyboard="keyboards/role_config.json")
+
+    def __check_roles(self, peer_id):
+        self.__send_message_to_chat(peer_id, ROLE_VALUE_CHECK)
+        self.__send_message_to_chat(peer_id, self.__groups[peer_id].player_pack.pretty_print_role_count())
+
+        if not self.__groups[peer_id].player_pack.make_roles():
+            self.__send_message_to_chat(peer_id, text="Количество участников не совпадает с общим количеством ролей.")
+        else:
+            self.__groups[peer_id].state = State.Vote
+            self.__send_message_to_chat(peer_id, ROLE_CONFIG_SUCCESS)

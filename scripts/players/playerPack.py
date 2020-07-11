@@ -1,11 +1,11 @@
 import random
 from player import Player
+from players import *
 
 
 class PlayerPack:
     __players = []
     __role_count = None
-    __role_dist = False
 
     def __init__(self, participants):
         self.players = participants
@@ -36,35 +36,24 @@ class PlayerPack:
         if self.__players is None:
             return
 
-        if self.__role_count is not None or PlayerPack.wrong_role_count(new_rc):
-            return
-
-        num = 0
-        for player_type, count in new_rc.items():
-            num += count
-
-        if num != len(self.__players):
-            print("Number of players doesn't match.")
+        if PlayerPack.wrong_role_count(new_rc):
             return
 
         self.__role_count = new_rc
 
     def make_roles(self):
-        if self.__role_dist:
-            return
+        num = 0
+        for player_type, count in self.__role_count.items():
+            num += count
 
-        if self.__role_count is None:
-            print("Empty role count.")
-            return
-
-        if len(self.__players) == 0:
-            print("PlayerPack has no players in it.")
-            return
+        if num != len(self.__players):
+            print("Number of players doesn't match.")
+            return False
 
         for player_type, count in self.__role_count.items():
             self.__make_type(player_type, count)
 
-        self.__role_dist = True
+        return True
 
     def __make_type(self, player_type, count):
         i = 0
@@ -112,5 +101,15 @@ class PlayerPack:
         i = 1
         for player in self.__players:
             resp += "{}. @{} {}\n".format(str(i), player["screen_name"], player["name"])
+            i += 1
+        return resp
+
+    def pretty_print_role_count(self):
+        resp = ""
+        i = 1
+        for type, item in self.__role_count.items():
+            role = type.role_name
+
+            resp += "{}. {} - {}\n".format(str(i), role, str(item))
             i += 1
         return resp
