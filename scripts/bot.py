@@ -21,6 +21,8 @@ class Bot(metaclass=MetaSingleton):
         self.__groups = dict()
         # Для настройки ролей
         self.__role = dict()
+        # Для голосований
+        self.__vote = dict()
 
     def start_polling(self):
         for event in self.__longpoll.listen():
@@ -53,6 +55,9 @@ class Bot(metaclass=MetaSingleton):
             self.__set_role(peer_id, text)
         elif self.__groups[peer_id].state == State.GroupChat and text == "Закончить":
             self.__start_vote(peer_id)
+        elif self.__groups[peer_id].state == State.Vote:
+            user = self.__groups[peer_id].ids[event.message["from_id"]]
+            self.__add_vote(peer_id, text, user)
 
     def __send_message_to_chat(self, peer_id, text, keyboard=None):
         self.__vk.messages.send(
@@ -102,6 +107,7 @@ class Bot(metaclass=MetaSingleton):
                 "screen_name": participant["screen_name"],
                 "name": participant["first_name"] + " " + participant["last_name"]
             })
+            self.__groups[peer_id].ids[participant["id"]] = participant["screen_name"]
 
         new_player_pack = PlayerPack(participants)
         return new_player_pack
@@ -259,3 +265,65 @@ class Bot(metaclass=MetaSingleton):
                 self.__send_message_to_person(player.screen_name, info)
 
     def __start_vote(self, peer_id):
+        self.__send_message_to_chat(peer_id, VOTE_BEGIN, keyboard="keyboards/vote.json")
+        self.__print_alive(peer_id)
+        self.__groups[peer_id].state = State.Vote
+        self.__vote[peer_id] = 0
+        self.__ask_for_vote(peer_id, 0)
+
+    def __ask_for_vote(self, peer_id, ind):
+        players = self.__groups[peer_id].player_pack.players
+        while ind < len(players) and not players[ind].active:
+            ind += 1
+
+        if ind >= len(players):
+            return -1
+
+        self.__send_message_to_chat(peer_id, VOTE_ASK.format(players[ind].screen_name))
+        return ind
+
+    def __add_vote(self, peer_id, text, user):
+        if user != self.__groups[peer_id].player_pack.players[self.__vote[peer_id]].screen_name:
+            return
+
+        if text == "Воздерживаюсь":
+            self.__groups[peer_id].votes[user] = -1
+            self.__send_message_to_chat(peer_id, VOTE_NONE.format(user))
+            ind = self.__ask_for_vote(peer_id, self.__vote[peer_id] + 1)
+            if ind != -1:
+                self.__vote[peer_id] = ind
+            else:
+                self.__end_vote(peer_id)
+        else:
+            if not text.isnumeric():
+                return
+
+            n = int(text)
+
+            if n < 1 or n > len(self.__groups[peer_id].player_pack.players):
+                return
+
+            if not self.__groups[peer_id].player_pack.players[n - 1].active:
+                return
+
+            self.__groups[peer_id].votes[user] = n - 1
+            self.__send_message_to_chat(peer_id,
+                                        VOTE.format(user, self.__groups[peer_id].player_pack.players[
+                                            self.__vote[peer_id]].screen_name))
+            ind = self.__ask_for_vote(peer_id, self.__vote[peer_id] + 1)
+            if ind != -1:
+                self.__vote[peer_id] = ind
+            else:
+                self.__end_vote(peer_id)
+
+    def __end_vote(self, peer_id):
+        del self.__vote[peer_id]
+        temp = dict()
+        m = -1
+
+        for key, value in self.__groups[peer_id].votes.items():
+            if value != -1:
+                temp[value] += 1
+                m = max(m, temp[value])
+
+        self.__send_message_to_chat()

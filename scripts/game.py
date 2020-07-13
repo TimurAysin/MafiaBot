@@ -7,7 +7,9 @@ from state import State
 
 class Game:
     __player_pack = None
+    ids = dict()
     state = None
+    votes = dict()
 
     @property
     def player_pack(self):
