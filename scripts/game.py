@@ -36,15 +36,6 @@ class Game:
         self.__player_pack.make_roles()
         self.state = State.Vote
 
-    def alive_players(self):
-        alive_players = []
-
-        for player in self.__player_pack.players:
-            if player.active:
-                alive_players.append(player)
-
-        return alive_players
-
     def players_by_type(self, player_type):
         if not (issubclass(player_type, Player)):
             print("Wrong player type -", player_type)

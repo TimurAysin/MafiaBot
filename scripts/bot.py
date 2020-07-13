@@ -51,6 +51,8 @@ class Bot(metaclass=MetaSingleton):
             self.__config_role(peer_id, text)
         elif self.__groups[peer_id].state == State.SetRole:
             self.__set_role(peer_id, text)
+        elif self.__groups[peer_id].state == State.GroupChat and text == "Закончить":
+            self.__start_vote(peer_id)
 
     def __send_message_to_chat(self, peer_id, text, keyboard=None):
         self.__vk.messages.send(
@@ -67,6 +69,18 @@ class Bot(metaclass=MetaSingleton):
             message=text,
             keyboard=None if (keyboard is None) else open(keyboard, "r", encoding="UTF-8").read()
         )
+
+    def __send_message_to_person(self, d, text):
+        id = self.__vk.users.get(
+            user_ids=d
+        )
+
+        info = self.__vk.messages.send(
+            random_id=random.randint(1, 1000000000000),
+            message=text,
+            user_ids=id[0]["id"]
+        )
+        return info
 
     @staticmethod
     def get_peer_id(event):
@@ -122,6 +136,10 @@ class Bot(metaclass=MetaSingleton):
         number_of_players = len(self.__groups[peer_id].player_pack.players)
         default_mafia_count = ceil(number_of_players / 4.0)
 
+        if number_of_players < 3:
+            self.__send_message_to_chat(peer_id, DEFAULT_ROLES_ERROR)
+            return
+
         role_count = {
             Mafia: default_mafia_count,
             Doctor: 1,
@@ -131,7 +149,7 @@ class Bot(metaclass=MetaSingleton):
 
         self.__groups[peer_id].add_role_count(role_count)
         self.__groups[peer_id].start_game()
-        self.__groups[peer_id].state = State.Vote
+        self.__start_chat(peer_id)
 
     def __configure_roles(self, peer_id):
         self.__send_message_to_chat(peer_id, CONFIG_EXPLAIN, keyboard="keyboards/role_config.json")
@@ -178,5 +196,66 @@ class Bot(metaclass=MetaSingleton):
         if not self.__groups[peer_id].player_pack.make_roles():
             self.__send_message_to_chat(peer_id, text="Количество участников не совпадает с общим количеством ролей.")
         else:
-            self.__groups[peer_id].state = State.Vote
-            self.__send_message_to_chat(peer_id, ROLE_CONFIG_SUCCESS)
+            self.__start_chat(peer_id)
+
+    def __start_chat(self, peer_id):
+        self.__send_message_to_chat(peer_id, ROLE_CONFIG_SUCCESS)
+        self.__groups[peer_id].state = State.GroupChat
+        self.__send_message_to_chat(peer_id, CHAT_BEGIN, keyboard="keyboards/chat.json")
+        self.__send_info(peer_id)
+        self.__print_mafia(peer_id)
+
+    def __send_info(self, peer_id):
+        for player in self.__groups[peer_id].player_pack.players:
+            text = ""
+
+            if player.role == PlayerType.Civilian:
+                text = CIVILIAN_DESC
+            elif player.role == PlayerType.Commissioner:
+                text = COMMISSIONER_DESC
+            elif player.role == PlayerType.Mafia:
+                text = MAFIA_DESC
+            elif player.role == PlayerType.Doctor:
+                text = DOCTOR_DESC
+            elif player.role == PlayerType.Maniac:
+                text = MANIAC_DESC
+            elif player.role == PlayerType.Don:
+                text = DON_DESC
+
+            self.__send_message_to_person(player.screen_name, text)
+
+    def __print_alive(self, peer_id):
+        p = self.__groups[peer_id].player_pack.players
+
+        info = "Активные игроки:\n"
+        i = 1
+        for player in p:
+            if not player.active:
+                i += 1
+                continue
+            info += "{}. @{} {}\n".format(str(i), player.screen_name, player.name)
+            i += 1
+
+        self.__send_message_to_chat(peer_id, info)
+
+    def __print_mafia(self, peer_id):
+        bad_people = self.__groups[peer_id].players_by_type(Mafia)
+        bad_people += self.__groups[peer_id].players_by_type(Don)
+
+        info = "Активные мафии и доны:\n"
+        i = 1
+        for player in bad_people:
+            if not player.active:
+                i += 1
+                continue
+            if player.role == PlayerType.Mafia:
+                info += "{}. @{} {} - Мафия.\n".format(str(i), player.screen_name, player.name)
+            elif player.role == PlayerType.Don:
+                info += "{}. @{} {} - Дон.\n".format(str(i), player.screen_name, player.name)
+            i += 1
+
+        for player in bad_people:
+            if player.active:
+                self.__send_message_to_person(player.screen_name, info)
+
+    def __start_vote(self, peer_id):
