@@ -191,9 +191,12 @@ class Bot(metaclass=MetaSingleton):
             self.__send_message_to_chat(peer_id, "Ок", keyboard="keyboards/role_config.json")
         else:
             self.__groups[peer_id].player_pack.role_count[self.__role[peer_id]] = int(text)
+            current_roles = self.__get_current_roles(peer_id)
             del self.__role[peer_id]
             self.__groups[peer_id].state = State.Config
+
             self.__send_message_to_chat(peer_id, ROLE_VALUE_SUCCESS, keyboard="keyboards/role_config.json")
+            self.__send_message_to_chat(peer_id, current_roles, keyboard="keyboards/role_config.json")
 
     def __check_roles(self, peer_id):
         self.__send_message_to_chat(peer_id, ROLE_VALUE_CHECK)
@@ -327,3 +330,6 @@ class Bot(metaclass=MetaSingleton):
                 m = max(m, temp[value])
 
         self.__send_message_to_chat()
+
+    def __get_current_roles(self, peer_id):
+        return ROLE_INFO + self.__groups[peer_id].player_pack.pretty_print_role_count()
