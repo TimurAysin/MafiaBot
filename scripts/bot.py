@@ -8,8 +8,8 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 class Bot:
     def __init__(self):
-        self.__token = "55d54859bfc02268950c448c91fe6c95e1261b94e960bea620907555863ed31ed7bc9ca462dd619e1bfed"
-        self.__group_id = "195261716"
+        self.__token = ""
+        self.__group_id = ""
 
         self.__vk_session = vk_api.VkApi(token=self.__token)
         self.__longpoll = VkBotLongPoll(self.__vk_session, self.__group_id)
